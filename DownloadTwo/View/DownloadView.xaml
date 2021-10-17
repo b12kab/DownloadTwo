@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="DownloadTwo.View.DownloadView">
+    <ContentPage.Content>
+        <StackLayout HorizontalOptions="Center" VerticalOptions="CenterAndExpand">
+            <Label Text="Export data to Downloads" />
+ 
+            <Entry x:Name="data"
+                   Text="{Binding Contents}"
+                   BackgroundColor="White"
+                   Placeholder="Text to write to a file" />
+
+            <Entry x:Name="filename"
+                   Text="{Binding Filename}"
+                   BackgroundColor="White"
+                   Placeholder="Filename to write" />
+
+            <StackLayout x:Name="switchStack" IsEnabled="False">
+                <Label Text="Set pending on file save?" />
+                <Switch IsToggled="{Binding PendingFlag}" />
+            </StackLayout>
+
+            <Button Text="Create download"
+                    Command="{Binding DownloadCommand}">
+                <Button.BorderRadius>
+                    <OnPlatform x:TypeArguments="x:Int32"
+                                Android="0"
+                                iOS="6"/>
+                </Button.BorderRadius>
+                <Button.BorderWidth>
+                    <OnPlatform x:TypeArguments="x:Double"
+                                Android="0"
+                                iOS="2"/>
+                </Button.BorderWidth>
+                <Button.FontAttributes>
+                    <OnPlatform x:TypeArguments="FontAttributes"
+                                iOS="Bold"/>
+                </Button.FontAttributes>
+            </Button>
+            
+            <Button Text="Download check"
+                    Command="{Binding DownloadCheckCommand}">
+                <Button.BorderRadius>
+                    <OnPlatform x:TypeArguments="x:Int32"
+                                Android="0"
+                                iOS="6"/>
+                </Button.BorderRadius>
+                <Button.BorderWidth>
+                    <OnPlatform x:TypeArguments="x:Double"
+                                Android="0"
+                                iOS="2"/>
+                </Button.BorderWidth>
+                <Button.FontAttributes>
+                    <OnPlatform x:TypeArguments="FontAttributes"
+                                iOS="Bold"/>
+                </Button.FontAttributes>
+            </Button>
+            
+            <Button Text="Attempt delete"
+                    Command="{Binding DownloadDeleteCommand}"
+                    IsEnabled="{Binding DownloadButtonEnabled}">
+                <Button.BorderRadius>
+                    <OnPlatform x:TypeArguments="x:Int32"
+                                Android="0"
+                                iOS="6"/>
+                </Button.BorderRadius>
+                <Button.BorderWidth>
+                    <OnPlatform x:TypeArguments="x:Double"
+                                Android="0"
+                                iOS="2"/>
+                </Button.BorderWidth>
+                <Button.FontAttributes>
+                    <OnPlatform x:TypeArguments="FontAttributes"
+                                iOS="Bold"/>
+                </Button.FontAttributes>
+            </Button>
+            
+            <Button Text="Attempt update"
+                    Command="{Binding DownloadUpdateCommand}"
+                    IsEnabled="{Binding UpdateButtonEnabled}">
+                <Button.BorderRadius>
+                    <OnPlatform x:TypeArguments="x:Int32"
+                                Android="0"
+                                iOS="6"/>
+                </Button.BorderRadius>
+                <Button.BorderWidth>
+                    <OnPlatform x:TypeArguments="x:Double"
+                                Android="0"
+                                iOS="2"/>
+                </Button.BorderWidth>
+                <Button.FontAttributes>
+                    <OnPlatform x:TypeArguments="FontAttributes"
+                                iOS="Bold"/>
+                </Button.FontAttributes>
+            </Button>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>
