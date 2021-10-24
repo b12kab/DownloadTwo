@@ -72,6 +72,108 @@ namespace DownloadTwo.Droid
         /// <returns>true = worked w/o error or false = failed with system error</returns>
         public bool FileCheck(string filename, out bool matched, out string androidUri, out long androidFileId)
         {
+            androidFileId = 0;
+
+            Version version = DeviceInfo.Version;
+
+            // After version 10 (API 29) cannot do anything directly to Downloads directory
+            // and must do it via the Mediastore API due to security changes
+            if (version.Major < 10)
+            {
+                return QueryAPI28AndBelow(filename, out matched, out androidUri);
+            }
+            else
+            {
+                return QueryAPI29AndAbove(filename, out matched, out androidUri, out androidFileId);
+            }
+        }
+
+        /// <summary>
+        /// This will try to delete a file
+        /// </summary>
+        /// <param name="filename">Filename to delete</param>
+        /// <param name="androidUri">URI to delete</param>
+        /// <param name="androidFileId">File id to delete</param>
+        /// <param name="deleteOK">Delete worked</param>
+        /// <returns>true = worked w/o error or false = failed with system error</returns>
+        public bool DeleteExportFile(string filename, string androidUri, long androidFileId, out bool deleteOK)
+        {
+            Version version = DeviceInfo.Version;
+
+            // After version 10 (API 29) cannot write directly to Downloads directory
+            // and must do it via the Mediastore API due to security changes
+            if (version.Major < 10)
+            {
+                return DeleteAPI28AndBelow(filename, out deleteOK);
+            }
+            else
+            {
+                return DeleteAPI29AndAbove(filename, androidUri, androidFileId, out deleteOK);
+            }
+        }
+
+        /// <summary>
+        /// This will try to update a file.
+        /// </summary>
+        /// <param name="androidUri">URI to delete</param>
+        /// <param name="updatedOK">Update worked</param>
+        /// <returns>true = worked w/o error or false = failed with system error</returns>
+        public bool UpdateExportFile(string androidUri, out bool updatedOK)
+        {
+            updatedOK = false;
+
+            Version version = DeviceInfo.Version;
+
+            // After version 10 (API 29) cannot write directly to Downloads directory.
+            // Update is only supported on version 11 (API 30).
+            if (version.Major > 10)
+            {
+                return UpdateAPI30AndAbove(androidUri, out updatedOK);
+            }
+
+            return true;
+        }
+
+        #region query file
+
+        private bool QueryAPI28AndBelow(string filename, out bool matched, out string androidUri)
+        {
+            matched = false;
+            androidUri = null;
+
+#pragma warning disable CS0618 // Type or member is obsolete
+            string directory = Path.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, Android.OS.Environment.DirectoryDownloads);
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            string filespec = Path.Combine(directory, filename);
+
+            try
+            {
+                FileInfo newFile = new FileInfo(filespec);
+                matched = newFile.Exists;
+                if (matched)
+                {
+                    Android.Net.Uri uri1;
+                    using (Java.IO.File file = new Java.IO.File(filespec))
+                    {
+                        uri1 = Android.Net.Uri.FromFile(file);
+                    }
+                    androidUri = uri1.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Failed file check. Passed in filename: " + filespec + ". Full filespec: " + filespec);
+                System.Diagnostics.Debug.WriteLine("Exception: " + ex.Message);
+                System.Diagnostics.Debug.Flush();
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool QueryAPI29AndAbove(string filename, out bool matched, out string androidUri, out long androidFileId)
+        {
             matched = false;
             androidUri = null;
             androidFileId = 0;
@@ -161,7 +263,7 @@ namespace DownloadTwo.Droid
                             matched = true;
                             androidFileId = id;
                             var junk = contentResolver.OpenFileDescriptor(uri1, "r");
-                            
+
                             bool isUriDocument = Android.Provider.DocumentsContract.IsDocumentUri(CrossCurrentActivity.Current.AppContext, uri1);
                             if (isUriDocument)
                             {
@@ -188,51 +290,7 @@ namespace DownloadTwo.Droid
             return true;
         }
 
-        /// <summary>
-        /// This will try to delete a file
-        /// </summary>
-        /// <param name="filename">Filename to delete</param>
-        /// <param name="androidUri">URI to delete</param>
-        /// <param name="androidFileId">File id to delete</param>
-        /// <param name="deleteOK">Delete worked</param>
-        /// <returns>true = worked w/o error or false = failed with system error</returns>
-        public bool DeleteExportFile(string filename, string androidUri, long androidFileId, out bool deleteOK)
-        {
-            Version version = DeviceInfo.Version;
-
-            // After version 10 (API 29) cannot write directly to Downloads directory
-            // and must do it via the Mediastore API due to security changes
-            if (version.Major < 10)
-            {
-                return DeleteAPI28AndBelow(filename, out deleteOK);
-            }
-            else
-            {
-                return DeleteAPI29AndAbove(filename, androidUri, androidFileId, out deleteOK);
-            }
-        }
-
-        /// <summary>
-        /// This will try to update a file.
-        /// </summary>
-        /// <param name="androidUri">URI to delete</param>
-        /// <param name="updatedOK">Update worked</param>
-        /// <returns>true = worked w/o error or false = failed with system error</returns>
-        public bool UpdateExportFile(string androidUri, out bool updatedOK)
-        {
-            updatedOK = false;
-
-            Version version = DeviceInfo.Version;
-
-            // After version 10 (API 29) cannot write directly to Downloads directory.
-            // Update is only supported on version 11 (API 30).
-            if (version.Major > 10)
-            {
-                return UpdateAPI30AndAbove(androidUri, out updatedOK);
-            }
-
-            return true;
-        }
+        #endregion query file
 
         #region delete file
 
@@ -410,6 +468,12 @@ namespace DownloadTwo.Droid
             try
             {
                 newUri = contentResolver.Insert(Android.Provider.MediaStore.Downloads.ExternalContentUri, values);
+                if (newUri == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Failed to get URI back from content resolver.");
+                    return false;
+                }
+                
                 androidUri = newUri.ToString();
             }
             catch (Exception ex)
