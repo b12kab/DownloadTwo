@@ -27,6 +27,11 @@ namespace DownloadTwo.View
                 switchStack.IsEnabled = true;
                 switchStack.Padding = 8;
             }
+            else
+            {
+                switchStack.IsVisible = false;
+                attemptUpdateButton.IsVisible = false;
+            }
 
             base.OnBindingContextChanged();
         }

@@ -23,7 +23,7 @@
             </StackLayout>
 
             <Button Text="Create download"
-                    Command="{Binding DownloadCommand}">
+                    Command="{Binding DownloadCreateCommand}">
                 <Button.BorderRadius>
                     <OnPlatform x:TypeArguments="x:Int32"
                                 Android="0"
@@ -60,7 +60,7 @@
             
             <Button Text="Attempt delete"
                     Command="{Binding DownloadDeleteCommand}"
-                    IsEnabled="{Binding DownloadButtonEnabled}">
+                    IsEnabled="{Binding DeleteButtonEnabled}">
                 <Button.BorderRadius>
                     <OnPlatform x:TypeArguments="x:Int32"
                                 Android="0"
@@ -78,6 +78,7 @@
             </Button>
             
             <Button Text="Attempt update"
+                    x:Name="attemptUpdateButton" 
                     Command="{Binding DownloadUpdateCommand}"
                     IsEnabled="{Binding UpdateButtonEnabled}">
                 <Button.BorderRadius>

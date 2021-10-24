@@ -12,7 +12,7 @@ namespace DownloadTwo.ViewModel
     public class DownloadViewModel : INotifyPropertyChanged
     {
         public INavigation _navigation;
-        public ICommand DownloadCommand { get; private set; }
+        public ICommand DownloadCreateCommand { get; private set; }
         public ICommand DownloadCheckCommand { get; private set; }
         public ICommand DownloadDeleteCommand { get; private set; }
         public ICommand DownloadUpdateCommand { get; private set; }
@@ -21,11 +21,11 @@ namespace DownloadTwo.ViewModel
         {
             _navigation = navigation;
 
-            DownloadCommand = new Command(async () => await ExportData());
+            DownloadCreateCommand = new Command(async () => await ExportData());
             DownloadCheckCommand = new Command(async () => await CheckExportFile());
             DownloadDeleteCommand = new Command(async () => await DeleteExportFile());
             DownloadUpdateCommand = new Command(async () => await UpdateExportFile());
-            this.DownloadButtonEnabled = false;
+            this.DeleteButtonEnabled = false;
             this.UpdateButtonEnabled = false;
             this.PendingFlag = false;
             this.AndroidUri = null;
@@ -46,13 +46,15 @@ namespace DownloadTwo.ViewModel
 
             if (PendingFlag)
             {
-                if (string.IsNullOrWhiteSpace(AndroidUri))
+                if (string.IsNullOrWhiteSpace(this.AndroidUri))
                 {
                     await Application.Current.MainPage.DisplayAlert("Export Data", "Update not currently possilble", "OK");
                     return;
                 }
 
-                bool worked = exportInfo.UpdateExportFile(AndroidUri, out bool updatedOK);
+                this.UpdateButtonEnabled = false;
+
+                bool worked = exportInfo.UpdateExportFile(this.AndroidUri, out bool updatedOK);
 
                 if (worked)
                 {
@@ -70,7 +72,6 @@ namespace DownloadTwo.ViewModel
                     await Application.Current.MainPage.DisplayAlert("Export Data", "Export file check failed", "OK");
                 }
 
-                this.UpdateButtonEnabled = false;
                 this.AndroidUri = null;
             }
             else
@@ -90,6 +91,9 @@ namespace DownloadTwo.ViewModel
                 exportInfo = new ExportData();
             }
 
+            this.DeleteButtonEnabled = false;
+            this.UpdateButtonEnabled = false;
+
             bool worked = exportInfo.DeleteExportFile(Filename, out bool deletedOK);
 
             if (worked)
@@ -107,9 +111,6 @@ namespace DownloadTwo.ViewModel
             {
                 await Application.Current.MainPage.DisplayAlert("Export Data", "Export file check failed", "OK");
             }
-
-            this.DownloadButtonEnabled = false;
-            this.UpdateButtonEnabled = false;
         }
 
         /// <summary>
@@ -123,13 +124,19 @@ namespace DownloadTwo.ViewModel
                 exportInfo = new ExportData();
             }
 
-            bool worked = exportInfo.CheckExportFile(Filename, out bool found, out _androidUri);
+            this.UpdateButtonEnabled = false;
+
+            bool worked = exportInfo.CheckExportFile(this.Filename, out bool found, out _androidUri);
 
             if (worked)
             {
-                this.DownloadButtonEnabled = found;
+                this.DeleteButtonEnabled = found;
                 if (found)
                 {
+                    if (!string.IsNullOrWhiteSpace(this.AndroidUri))
+                    {
+                        System.Diagnostics.Debug.WriteLine("Check export file - Android URI: " + this.AndroidUri);
+                    }
                     await Application.Current.MainPage.DisplayAlert("Export Data", "Export file exists", "OK");
                 }
                 else
@@ -139,8 +146,7 @@ namespace DownloadTwo.ViewModel
             }
             else
             {
-                this.DownloadButtonEnabled = false;
-                this.UpdateButtonEnabled = false;
+                this.DeleteButtonEnabled = false;
                 await Application.Current.MainPage.DisplayAlert("Export Data", "Export file check failed", "OK");
             }
         }
@@ -174,16 +180,20 @@ namespace DownloadTwo.ViewModel
 
                 if (worked)
                 {
-                    if (PendingFlag)
+                    if (!string.IsNullOrWhiteSpace(this.AndroidUri))
                     {
-                        this.UpdateButtonEnabled = true;
+                        System.Diagnostics.Debug.WriteLine("Write file - Android URI: " + this.AndroidUri);
+                        if (PendingFlag)
+                        {
+                            this.UpdateButtonEnabled = true;
+                        }
                     }
                     await Application.Current.MainPage.DisplayAlert("Export Data", "Export worked", "OK");
                 }
                 else
                 {
-                    await Application.Current.MainPage.DisplayAlert("Export Data", "Export Failed", "OK");
                     this.UpdateButtonEnabled = false;
+                    await Application.Current.MainPage.DisplayAlert("Export Data", "Export Failed", "OK");
                 }
             }
         }
@@ -241,13 +251,13 @@ namespace DownloadTwo.ViewModel
         }
 
         private bool _deleteEnabled;
-        public bool DownloadButtonEnabled
+        public bool DeleteButtonEnabled
         {
             get => _deleteEnabled;
             set
             {
                 _deleteEnabled = value;
-                NotifyPropertyChanged("DownloadButtonEnabled");
+                NotifyPropertyChanged("DeleteButtonEnabled");
             }
         }
 
